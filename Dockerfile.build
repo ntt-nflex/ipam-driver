@@ -1,0 +1,9 @@
+FROM golang:1.7-alpine
+
+RUN apk --update add --no-cache --virtual .build-deps \
+    gcc libc-dev linux-headers
+
+COPY . /go/src/ipam-driver
+WORKDIR /go/src/ipam-driver
+
+RUN go build -o bin/ipam-plugin

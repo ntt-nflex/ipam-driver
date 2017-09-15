@@ -1,0 +1,34 @@
+{
+   "Description":"nFlex IPAM plugin for Docker",
+   "Documentation":"http://github.com/ntt-nflex/docker-ipam",
+   "Entrypoint":[
+      "/ipam-plugin"
+   ],
+   "Interface":{
+      "Socket":"nflex-ipam.sock",
+      "Types":[
+         "docker.ipamdriver/1.0"
+      ]
+   },
+   "Network":{
+      "Type":"host"
+   },
+   "Env":[
+     {
+       "Description": "ETCD IP or Hostname(s)",
+       "Name": "ETCD_HOSTS",
+       "Settable": [
+           "value"
+       ]
+     },
+     {
+       "Description": "Sets log level to debug",
+       "Name": "DEBUG",
+       "Settable": [
+           "value"
+       ]
+     }
+   ],
+   "Linux":{
+   }
+}

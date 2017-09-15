@@ -1,0 +1,19 @@
+package: github.com/ntt-nflex/ipam-driver
+import:
+- package: github.com/Sirupsen/logrus
+- package: github.com/caarlos0/env
+- package: github.com/docker/engine-api
+  subpackages:
+  - client
+- package: github.com/docker/go-plugins-helpers
+  subpackages:
+  - ipam
+- package: github.com/docker/libnetwork
+  subpackages:
+  - netlabel
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: github.com/coreos/etcd
+  subpackages:
+  - client

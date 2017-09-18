@@ -10,8 +10,8 @@ import (
 	"github.com/docker/go-plugins-helpers/ipam"
 	. "github.com/smartystreets/goconvey/convey"
 
-	"ipam-driver/db"
-	"ipam-driver/handler"
+	"github.com/ntt-nflex/ipam-driver/db"
+	"github.com/ntt-nflex/ipam-driver/handler"
 )
 
 var (

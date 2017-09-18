@@ -5,8 +5,8 @@ import (
 	"github.com/caarlos0/env"
 	"github.com/docker/go-plugins-helpers/ipam"
 
-	"ipam-driver/db"
-	"ipam-driver/handler"
+	"github.com/ntt-nflex/ipam-driver/db"
+	"github.com/ntt-nflex/ipam-driver/handler"
 )
 
 type config struct {

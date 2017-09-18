@@ -8,7 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/ipam"
 
-	"ipam-driver/db"
+	"github.com/ntt-nflex/ipam-driver/db"
 )
 
 // IPAMHandler holds the main IPAM Handler object
@@ -82,11 +82,13 @@ func (h IPAMHandler) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.
 	if request.Address != "" {
 		addr, err = h.ReserveIP(request.PoolID, request.Address)
 		if err != nil {
+			log.Infof("RequestAddress failed: %s", err)
 			return nil, fmt.Errorf("Failed to reserve ip %s: %s", request.Address, err)
 		}
 	} else {
 		addr, err = h.ReserveFreeIP(request.PoolID)
 		if err != nil {
+			log.Infof("RequestAddress failed: %s", err)
 			return nil, fmt.Errorf("Failed to reserve ip: %s", err)
 		}
 	}
@@ -96,6 +98,7 @@ func (h IPAMHandler) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.
 		Data:    map[string]string{},
 	}
 
+	log.Infof("RequestAddress returning %s", addr)
 	return &response, nil
 }
 

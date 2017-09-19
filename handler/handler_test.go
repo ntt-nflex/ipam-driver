@@ -21,7 +21,7 @@ var (
 const namespace = "/nflex/ipam-test"
 
 func TestMain(m *testing.M) {
-	//log.SetLevel(log.FatalLevel)
+	log.SetLevel(log.FatalLevel)
 	setup()
 	cleanup()
 	code := m.Run()
@@ -46,7 +46,7 @@ func cleanup() {
 		// print directory keys
 		sort.Sort(nodes)
 		for _, n := range nodes {
-			fmt.Printf("Delete Key: %q, Value: %q\n", n.Key, n.Value)
+			log.Infof("Delete Key: %q, Value: %q\n", n.Key, n.Value)
 			cli.DeleteKey(n.Key)
 		}
 	}
@@ -218,6 +218,51 @@ func TestRequestAddress(t *testing.T) {
 				So(response2.Address, ShouldStartWith, "10.0.1.")
 				So(response2.Address, ShouldEndWith, "/24")
 				So(response2.Address, ShouldNotEqual, response1.Address)
+			})
+		})
+
+		Convey("When the address space is exhausted, IP allocation should fail", func() {
+
+			name := "test-exhaust-pool"
+			addr := "10.0.1.0/28"
+
+			req1 := ipam.RequestPoolRequest{
+				Pool:    addr,
+				Options: map[string]string{"network-name": name},
+			}
+			_, err := h.RequestPool(&req1)
+			So(err, ShouldBeNil)
+
+			request := ipam.RequestAddressRequest{
+				PoolID: name,
+			}
+
+			for i := 0; i < 14; i++ {
+				response, err := h.RequestAddress(&request)
+				So(err, ShouldBeNil)
+				So(response.Address, ShouldNotBeEmpty)
+				So(response.Address, ShouldStartWith, "10.0.1.")
+				So(response.Address, ShouldEndWith, "/28")
+			}
+
+			_, err = h.RequestAddress(&request)
+			So(err, ShouldNotBeNil)
+
+			Convey("When an IP is returned to the pool, the next allocation request should receive that IP", func() {
+				err = h.ReleaseAddress(&ipam.ReleaseAddressRequest{
+					PoolID:  name,
+					Address: "10.0.1.3",
+				})
+				So(err, ShouldBeNil)
+
+				response, err := h.RequestAddress(&request)
+				So(err, ShouldBeNil)
+				So(response.Address, ShouldEqual, "10.0.1.3/28")
+
+				Convey("If another request is made, the allocation should fail again", func() {
+					_, err = h.RequestAddress(&request)
+					So(err, ShouldNotBeNil)
+				})
 			})
 		})
 	})

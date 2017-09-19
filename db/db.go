@@ -37,7 +37,6 @@ func (c *Client) GetKey(key string) (string, error) {
 	kapi := client.NewKeysAPI(c.client)
 	resp, err := kapi.Get(context.Background(), key, nil)
 	if err != nil {
-		log.Error(err)
 		return "", err
 	}
 	log.Debugf("Get key %s with value %s", resp.Node.Key, resp.Node.Value)
@@ -76,7 +75,6 @@ func (c *Client) SetKey(key, value string) error {
 	kapi := client.NewKeysAPI(c.client)
 	resp, err := kapi.Set(context.Background(), key, value, nil)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	log.Debugf("Set key %s with value %s", resp.Node.Key, resp.Node.Value)
@@ -91,7 +89,6 @@ func (c *Client) SetKeyIfNotExist(key, value string) error {
 	}
 	resp, err := kapi.Set(context.Background(), key, value, opts)
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 	log.Debugf("Set key %s with value %s", resp.Node.Key, resp.Node.Value)

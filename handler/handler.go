@@ -47,7 +47,7 @@ func (h IPAMHandler) RequestPool(request *ipam.RequestPoolRequest) (*ipam.Reques
 	}
 	log.Infof("Pool: %s %s", ipAddr, ipNet)
 
-	pool, err := h.CreatePool(networkName, *ipNet)
+	pool, err := h.CreatePool(networkName, *ipNet, request.Options)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (h IPAMHandler) RequestPool(request *ipam.RequestPoolRequest) (*ipam.Reques
 	response := ipam.RequestPoolResponse{
 		PoolID: pool.ID,
 		Pool:   pool.Network.String(),
-		Data:   pool.Data,
+		Data:   pool.Options,
 	}
 	log.Infof("RequestPoolResponse : %+v", response)
 
@@ -79,14 +79,27 @@ func (h IPAMHandler) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.
 
 	var addr string
 	var err error
-	if request.Address != "" {
-		addr, err = h.ReserveIP(request.PoolID, request.Address)
+	pool, err := h.GetPool(request.PoolID)
+	if err != nil {
+		return nil, err
+	}
+
+	addrType := request.Options["RequestAddressType"]
+	if addrType == "com.docker.network.gateway" && pool.Options["AllowGatewayIPAssignment"] == "true" {
+		log.Infof("Skipping IP Reservation for Gateway address: %s", request.Address)
+		addr, err = h.DontReserveIP(pool, request.Address)
+		if err != nil {
+			log.Infof("RequestAddress failed: %s", err)
+			return nil, fmt.Errorf("Failed to reserve ip %s: %s", request.Address, err)
+		}
+	} else if request.Address != "" {
+		addr, err = h.ReserveIP(pool, request.Address)
 		if err != nil {
 			log.Infof("RequestAddress failed: %s", err)
 			return nil, fmt.Errorf("Failed to reserve ip %s: %s", request.Address, err)
 		}
 	} else {
-		addr, err = h.ReserveFreeIP(request.PoolID)
+		addr, err = h.ReserveFreeIP(pool)
 		if err != nil {
 			log.Infof("RequestAddress failed: %s", err)
 			return nil, fmt.Errorf("Failed to reserve ip: %s", err)

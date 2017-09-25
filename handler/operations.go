@@ -13,15 +13,16 @@ import (
 type Pool struct {
 	ID      string
 	Network net.IPNet
-	Data    map[string]string
+	Options map[string]string
 }
 
 // CreatePool creates a new pool
-func (h IPAMHandler) CreatePool(name string, network net.IPNet) (*Pool, error) {
+func (h IPAMHandler) CreatePool(name string, network net.IPNet, options map[string]string) (*Pool, error) {
 	key := fmt.Sprintf("%s/pool/%s", h.ns, name)
 	pool := Pool{
 		ID:      name,
 		Network: network,
+		Options: options,
 	}
 	data, err := json.Marshal(pool)
 	if err != nil {
@@ -58,14 +59,9 @@ func (h IPAMHandler) GetPool(poolID string) (*Pool, error) {
 }
 
 // ReserveIP reserves an ip address in a pool, if available
-func (h IPAMHandler) ReserveIP(poolID string, ip string) (string, error) {
-	pool, err := h.GetPool(poolID)
-	if err != nil {
-		return "", err
-	}
-
-	key := fmt.Sprintf("%s/pool/allocated/%s/%s", h.ns, poolID, ip)
-	err = h.db.SetKeyIfNotExist(key, "1")
+func (h IPAMHandler) ReserveIP(pool *Pool, ip string) (string, error) {
+	key := fmt.Sprintf("%s/pool/allocated/%s/%s", h.ns, pool.ID, ip)
+	err := h.db.SetKeyIfNotExist(key, "1")
 	if err != nil {
 		return "", err
 	}
@@ -75,22 +71,9 @@ func (h IPAMHandler) ReserveIP(poolID string, ip string) (string, error) {
 }
 
 // ReserveFreeIP ...
-func (h IPAMHandler) ReserveFreeIP(poolID string) (string, error) {
-	//Get Pool
-	key := fmt.Sprintf("%s/pool/%s", h.ns, poolID)
-	data, err := h.db.GetKey(key)
-	if err != nil {
-		return "", err
-	}
-	pool := Pool{}
-	err = json.Unmarshal([]byte(data), &pool)
-	if err != nil {
-		return "", err
-	}
-
+func (h IPAMHandler) ReserveFreeIP(pool *Pool) (string, error) {
 	// Get Allocated IPs
-	key = fmt.Sprintf("%s/pool/allocated/%s", h.ns, poolID)
-
+	key := fmt.Sprintf("%s/pool/allocated/%s", h.ns, pool.ID)
 	nodes, err := h.db.GetKeys(key)
 	if err != nil {
 		// KeyNotFound -> this is the first allocation from the pool - ignore the error
@@ -118,7 +101,7 @@ func (h IPAMHandler) ReserveFreeIP(poolID string) (string, error) {
 		ip := netip.String()
 
 		if _, ok := used[ip]; !ok {
-			addr, err := h.ReserveIP(poolID, ip)
+			addr, err := h.ReserveIP(pool, ip)
 			if err != nil {
 				// NodeExist -> this IP is not free, try the next one
 				if errorIs(client.ErrorCodeNodeExist, err) {
@@ -130,6 +113,14 @@ func (h IPAMHandler) ReserveFreeIP(poolID string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("No IPs available")
+}
+
+// DontReserveIP skipsreserving an ip address in a pool,
+// but still returns a valid response
+func (h IPAMHandler) DontReserveIP(pool *Pool, ip string) (string, error) {
+	prefixSize, _ := pool.Network.Mask.Size()
+	addr := fmt.Sprintf("%s/%d", ip, prefixSize)
+	return addr, nil
 }
 
 // ReleaseIP releases an ip address in a pool

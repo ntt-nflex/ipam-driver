@@ -17,7 +17,20 @@ IP Allocation is handled via Etcd, which should be available on the local host. 
 
 ## Usage:
 
+```
 docker network create --driver overlay --ipam-driver nflex/ipam-driver:0.0.1 --ipam-opt="network-name=overlay1" --subnet 10.0.1.0/24 overlay1
+```
+
+## Assigning the Gateway IP:
+
+By default docker always reserves the Gateway IP on any network, meaning we cannot assign this to a container.
+
+By adding the AllowGatewayIPAssignment: true option when creating a network, the IPAM driver will not actually reserve the gateway ip in it's internal database, allowing this to be reserved by a subsequent request.  This should be used in conjunction with the --gateway option to specify the gateway ip.
+
+```
+docker network create --driver overlay --gateway 10.0.1.1 --ipam-driver nflex/ipam-driver:0.0.1 --ipam-opt="network-name=overlay1" --ipam-opt="AllowGatewayIPAssignment=true" --subnet 10.0.1.0/24 overlay1
+```
+
 
 
 ## Limitations

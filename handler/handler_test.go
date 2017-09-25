@@ -74,7 +74,7 @@ func TestRequestPool(t *testing.T) {
 			check := cli.IsKeyExist(key)
 			So(check, ShouldBeTrue)
 
-			Convey("When RequestPool is called again with same name,the result is the same", func() {
+			Convey("When RequestPool is called again with same name, the result is the same", func() {
 				response, err := h.RequestPool(&request)
 				So(err, ShouldBeNil)
 				So(response.PoolID, ShouldEqual, name)
@@ -184,8 +184,9 @@ func TestRequestAddress(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(response.Address, ShouldEqual, "10.0.1.100/24")
 
-			//check = cli.IsKeyExist(key)
-			//So(check, ShouldBeFalse)
+			key := fmt.Sprintf("%s/pool/allocated/%s/%s", namespace, name, ip)
+			check := cli.IsKeyExist(key)
+			So(check, ShouldBeTrue)
 
 			Convey("When the same fixed IP is requested again, we get an error", func() {
 				request := ipam.RequestAddressRequest{
@@ -208,8 +209,9 @@ func TestRequestAddress(t *testing.T) {
 			So(response1.Address, ShouldStartWith, "10.0.1.")
 			So(response1.Address, ShouldEndWith, "/24")
 
-			//check = cli.IsKeyExist(key)
-			//So(check, ShouldBeFalse)
+			key := fmt.Sprintf("%s/pool/allocated/%s/%s", namespace, name, response1.Address)
+			check := cli.IsKeyExist(key)
+			So(check, ShouldBeTrue)
 
 			Convey("When the request is repeated, another ip should be allocated", func() {
 				response2, err := h.RequestAddress(&request)
@@ -262,6 +264,63 @@ func TestRequestAddress(t *testing.T) {
 				Convey("If another request is made, the allocation should fail again", func() {
 					_, err = h.RequestAddress(&request)
 					So(err, ShouldNotBeNil)
+				})
+			})
+		})
+	})
+}
+
+func TestRequestGatewayAddress(t *testing.T) {
+	Convey("When RequestAddress is called", t, func() {
+		Reset(cleanup)
+
+		h := handler.NewHandler(cli, namespace)
+
+		name := "test-release-pool"
+		addr := "10.0.1.0/24"
+		ip := "10.0.1.1"
+
+		req1 := ipam.RequestPoolRequest{
+			Pool: addr,
+			Options: map[string]string{"network-name": name,
+				"AllowGatewayIPAssignment": "true"},
+		}
+		_, err := h.RequestPool(&req1)
+		So(err, ShouldBeNil)
+
+		Convey("When a gateway ip is requested, response is as expected", func() {
+			request := ipam.RequestAddressRequest{
+				PoolID:  name,
+				Address: ip,
+				Options: map[string]string{"RequestAddressType": "com.docker.network.gateway"},
+			}
+			response, err := h.RequestAddress(&request)
+			So(err, ShouldBeNil)
+			So(response.Address, ShouldEqual, "10.0.1.1/24")
+
+			//check := cli.IsKeyExist(key)
+			//So(check, ShouldBeFalse)
+
+			Convey("When the fixed gateway ip is requested, the ip will be allocated", func() {
+				request := ipam.RequestAddressRequest{
+					PoolID:  name,
+					Address: ip,
+				}
+				response, err := h.RequestAddress(&request)
+				So(err, ShouldBeNil)
+				So(response.Address, ShouldEqual, "10.0.1.1/24")
+
+				//check = cli.IsKeyExist(key)
+				//So(check, ShouldBeTrue)
+
+				Convey("When the same fixed IP is requested again, we get an error", func() {
+					request := ipam.RequestAddressRequest{
+						PoolID:  name,
+						Address: ip,
+					}
+					response, err := h.RequestAddress(&request)
+					So(err, ShouldNotBeNil)
+					So(response, ShouldBeNil)
 				})
 			})
 		})

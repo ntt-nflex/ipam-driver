@@ -1,5 +1,5 @@
 PLUGIN_NAME=nflex/ipam-driver
-RELEASE=0.0.1
+RELEASE=0.0.2
 
 .PHONY: clean
 clean:

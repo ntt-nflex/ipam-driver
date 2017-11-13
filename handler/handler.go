@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/ipam"
 
 	"github.com/ntt-nflex/ipam-driver/db"

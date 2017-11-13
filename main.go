@@ -1,9 +1,9 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/caarlos0/env"
 	"github.com/docker/go-plugins-helpers/ipam"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/ntt-nflex/ipam-driver/db"
 	"github.com/ntt-nflex/ipam-driver/handler"

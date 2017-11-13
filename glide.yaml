@@ -1,6 +1,6 @@
 package: github.com/ntt-nflex/ipam-driver
 import:
-- package: github.com/Sirupsen/logrus
+- package: github.com/sirupsen/logrus
 - package: github.com/caarlos0/env
 - package: github.com/docker/engine-api
   subpackages:
